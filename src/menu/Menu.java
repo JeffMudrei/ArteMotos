@@ -36,13 +36,16 @@ public class Menu {
                     System.out.println("#        Cadastrar cliente          #");
                     createCliente();
                 case 3:
+                    String nome, documento;
+                    Scanner scanner = new Scanner(System.in);
                     System.out.println("#        Cadastrar moto             #");
+                    System.out.println();
                     System.out.println("Informe o nome do cliente");
                     System.out.print(">>> ");
-                    String nome = sc.nextLine().toUpperCase();
+                    nome = scanner.nextLine().toUpperCase();
                     System.out.println("Informe o numero do documento (somente numeros) ");
                     System.out.print(">>> ");
-                    String documento = sc.nextLine();
+                    documento = scanner.nextLine();
 
                     createMoto(nome, documento);
                 case 4:
@@ -65,12 +68,7 @@ public class Menu {
         System.out.println("#####################################");
 
     }
-    /*
-   INSERT INTO CLIENTE (NMCLIENTE, TIPOCLIENTE, `CPF/CNPJ`) VALUES ('OZZY OSBOURNE', 'FISICO', '00066600000');
 
-   INSERT INTO ENDERECO (CEP, NMRUA, NRCASA, COMPLEMENTO, ESTADO, CIDADE, BAIRRO, CLIENTE_IDCLIENTE)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?);
-    */
     public static void createCliente() throws SQLException {
         Scanner scanner = new Scanner(System.in);
         Connection con = ConnectionFactory.getConnection();
@@ -127,7 +125,7 @@ public class Menu {
             menuOpcao();
         }
         else{
-            System.out.println("Opcao inválida.");
+
             menuOpcao();
         }
 
@@ -152,7 +150,7 @@ public class Menu {
             System.out.println("Informe o nome da rua: ");
             System.out.print(" >>> ");
             end.rua = scanner.nextLine().toUpperCase();
-            System.out.println("Informe o numero da casa (somente numeros): ");
+            System.out.println("Informe o numero (somente numeros): ");
             System.out.print(" >>> ");
             end.numero = Integer.parseInt(scanner.nextLine());
             System.out.println("Informe o Complemento: ");
@@ -323,12 +321,9 @@ public class Menu {
         } finally {
             ConnectionFactory.closeConnection(con);
         }
+        menuOpcao();
 
     }
-
-    /*
-    INSERT INTO PECA (NMPECA, VALOR, DESCRICAO) VALUES (?, ?, ?);
-     */
 
     public static void createPeca() throws SQLException {
 
@@ -424,18 +419,7 @@ class Telefone{
 }
 
 class Moto{
-    /*
-    create TABLE MOTO_CLIENTE(
-	IDMOTO INT not null primary key auto_increment,
-    MARCA VARCHAR(20),
-    MODELO VARCHAR(20),
-    COR varchar(10),
-    COMBUSTIVEL VARCHAR(10),
-    ID_CLIENTE INT NOT NULL,
-	FOREIGN KEY (ID_CLIENTE)
-    REFERENCES `CLIENTE` (`IDCLIENTE`)
-    );
-    */
+
     String marca, modelo, cor, combustivel;
     int id_cliente;
 
