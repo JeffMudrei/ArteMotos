@@ -4,6 +4,9 @@ import connection.ConnectionFactory;
 
 import javax.swing.*;
 import java.sql.*;
+import java.text.NumberFormat;
+import java.text.ParseException;
+import java.util.Locale;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,39 +31,41 @@ public class Menu {
         System.out.print("             Opção >>> ");
         opcao = sc.nextInt();
 
-        if (opcao == 1 || opcao == 2 || opcao == 3 || opcao == 4 || opcao == 5 || opcao == 6)
-            switch(opcao) {
-                case 1:
-                    break;
-                case 2:
-                    System.out.println("#        Cadastrar cliente          #");
-                    createCliente();
-                case 3:
-                    String nome, documento;
-                    Scanner scanner = new Scanner(System.in);
-                    System.out.println("#        Cadastrar moto             #");
-                    System.out.println();
-                    System.out.println("Informe o nome do cliente");
-                    System.out.print(">>> ");
-                    nome = scanner.nextLine().toUpperCase();
-                    System.out.println("Informe o numero do documento (somente numeros) ");
-                    System.out.print(">>> ");
-                    documento = scanner.nextLine();
+        switch(opcao) {
+            case 1:
+                break;
+            case 2:
+                System.out.println("#        Cadastrar cliente          #");
+                createCliente();
+            case 3:
+                String nome, documento;
+                Scanner scanner = new Scanner(System.in);
+                System.out.println("#        Cadastrar moto             #");
+                System.out.println();
+                System.out.println("Informe o nome do cliente");
+                System.out.print(">>> ");
+                nome = scanner.nextLine().toUpperCase();
+                System.out.println("Informe o numero do documento (somente numeros) ");
+                System.out.print(">>> ");
+                documento = scanner.nextLine();
 
-                    createMoto(nome, documento);
-                case 4:
-                    break;
-                case 5:
-                    System.out.println("#         Cadastrar peça            #");
-                    createPeca();
-                case 6:
-                    System.out.println("#            Até mais!!             #");
-                    break;
-            }
-        else{
-            System.out.println("Opção inválida!");
-            System.out.println();
+                createMoto(nome, documento);
+            case 4:
+                System.out.println("#         Cadastrar Servico         #");
+                createServico();
+
+            case 5:
+                System.out.println("#         Cadastrar peça            #");
+                createPeca();
+            case 6:
+                System.out.println("#            Até mais!!             #");
+                break;
+
+            default:
+                System.out.println("Opção inválida!!!");
+                menuOpcao();
         }
+
     }
     public static void cabecalho(){
         System.out.println("#####################################");
@@ -70,6 +75,10 @@ public class Menu {
     }
 
     public static void createCliente() throws SQLException {
+        /*
+         * Cria objeto cliente e insere na base
+         * busca ID do cliente para inserir como fk em Endereço, Email e Telefone.
+         */
         Scanner scanner = new Scanner(System.in);
         Connection con = ConnectionFactory.getConnection();
         PreparedStatement ps;
@@ -81,8 +90,6 @@ public class Menu {
             sql = "INSERT INTO  CLIENTE (NMCLIENTE, TIPOCLIENTE, `CPF/CNPJ`) VALUES (?,?,?)";
             ps = con.prepareStatement(sql);
             Cliente c = new Cliente();
-            // Endereco end = new Endereco();
-
 
             System.out.println("Informe o nome completo: ");
             System.out.print(">>> ");
@@ -113,25 +120,37 @@ public class Menu {
         createEndereco(id);
         createEmail(id);
         createTelefone(id);
-
-        System.out.println("Deseja cadastrar moto?\nSim - digite 1\nNão - digite 2 ");
+        System.out.println("Incluir Moto? \n1 - SIM\n2-NAO");
         System.out.print(">>> ");
-        int opcao = scanner.nextInt();
-        if (opcao == 1){
-            createMoto(nome, documento);
-        }
-        if (opcao == 2) {
-            System.out.println("Inserido com sucesso...");
-            menuOpcao();
-        }
-        else{
+        int op = scanner.nextInt();
+        switch (op){
+            case 1:
+                createMoto(nome, documento);
 
-            menuOpcao();
+            case 2:
+                break;
+            default:
+                System.out.println("Opçao inválida: ");
+                break;
+        }
+
+        System.out.println("Incluir serviço? \n1 - SIM\n2-NAO");
+        System.out.print(">>> ");
+        op = scanner.nextInt();
+        switch (op){
+            case 1:
+                createServico();
+            case 2:
+                menuOpcao();
+            default:
+                System.out.println("Opçao inválida: ");
+                menuOpcao();
         }
 
     }
-    public static void createEndereco(int id) throws SQLException {
-
+    public static void createEndereco(int id){
+        /*
+         * Cria endereço, usa PK de Cliente como FK (parametro id) */
         Connection con = ConnectionFactory.getConnection();
         PreparedStatement ps;
         String sql = "";
@@ -186,31 +205,7 @@ public class Menu {
         System.out.println("Inserido com sucesso...");
         System.out.println();
     }
-    public static int selectIdCliente(String nome, String documento) throws SQLException {
-        int id = 0;
-        Connection con = ConnectionFactory.getConnection();
-        ResultSet myResultSet;
-        Statement myStatement = con.createStatement();
-
-        try {
-            String sql = "select IDCLIENTE from CLIENTE WHERE NMCLIENTE = '" + nome  +"' and `CPF/CNPJ` = '" + documento + "'";
-            myResultSet = myStatement.executeQuery(sql);
-
-
-            while (myResultSet.next()){
-                id = myResultSet.getInt(1);
-            }
-
-        } catch (SQLException ex){
-            JOptionPane.showMessageDialog(null, "Erro no banco de dados: " + ex);
-            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
-        }finally {
-            ConnectionFactory.closeConnection(con);
-        }
-        return id;
-    }
-
-    public static void createEmail(int id){
+    public static void createEmail(int id){ //id é pk de cliente
 
         Connection con = ConnectionFactory.getConnection();
         PreparedStatement ps;
@@ -241,7 +236,7 @@ public class Menu {
         }
     }
 
-    public static void createTelefone(int id){
+    public static void createTelefone(int id){ // id é pk de cliente
 
         Connection con = ConnectionFactory.getConnection();
         PreparedStatement ps;
@@ -279,13 +274,16 @@ public class Menu {
     }
 
     public static void createMoto(String nome, String documento) throws SQLException {
+        /**
+         * Usa nome e documento para retornar ID do cliente e inserir como FK em MOTO
+         */
         Scanner scanner = new Scanner(System.in);
         Connection con = ConnectionFactory.getConnection();
         PreparedStatement ps;
         String sql;
         int id;
 
-        id = pesquisaId(nome, documento);
+        id = pesquisaIdCliente(nome, documento);
 
         try {
 
@@ -321,12 +319,13 @@ public class Menu {
         } finally {
             ConnectionFactory.closeConnection(con);
         }
-        menuOpcao();
 
     }
 
     public static void createPeca() throws SQLException {
-
+        /**
+         * Cria ojeto peça.
+         */
         Connection con = ConnectionFactory.getConnection();
         PreparedStatement ps;
         String sql = "";
@@ -369,7 +368,10 @@ public class Menu {
 
     }
 
-    public static int pesquisaId(String nome, String documento) throws SQLException {
+    public static int pesquisaIdCliente(String nome, String documento) throws SQLException {
+        /**
+         * Faz busca com Nome e Documento para retornar o ID do cliente
+         */
         int id = 0;
         Connection con = ConnectionFactory.getConnection();
         ResultSet myResultSet;
@@ -392,6 +394,255 @@ public class Menu {
         }
         return id;
     }
+
+
+    public static void createServico() throws SQLException {
+        /**
+         * Cria serviço e da opção de incluir ID do cliente ou buscar pelo nome e documento
+         * Pergunta se foram usadas peças para o serviço e inclui o registro na tabela PECA_SERVICO
+         */
+        Connection con = ConnectionFactory.getConnection();
+        Scanner sc = new Scanner(System.in);
+        PreparedStatement ps;
+        String sql, nome, documento, op, nome_servico = null, descricao_servico = null;
+        int id = 0;
+
+
+        System.out.println("Possui o ID do cliente? \nDigite SIM para informar o ID\n " +
+                "Digite NAO para informar o nome e documento" +
+                "\n SAIR para sair:");
+        System.out.print(">>> ");
+        op = sc.nextLine().toUpperCase();
+        if (op.equals("SAIR")){
+            menuOpcao();
+        }
+        if (op.equals("SIM")){
+            System.out.println("Informe o ID");
+            System.out.print(">>> ");
+            id = sc.nextInt();
+
+        }
+        else if (op.equals("NAO")){
+            System.out.println("Informe o Nome");
+            System.out.print(">>> ");
+            nome = sc.nextLine().toUpperCase();
+            System.out.println("Informe o numero do documento (somente numeros)");
+            System.out.print(">>> ");
+            documento = sc.nextLine();
+            id = pesquisaIdCliente(nome, documento);
+
+        }
+        else{
+            System.out.println("Opçao inválida");
+            createServico();
+        }
+
+
+        try {
+
+            sql = "insert into SERVICO (NMSERVICO, VALOR, DESCRICAO, IDCLIENTE) values(?, ?, ?, ?)";
+
+            ps = con.prepareStatement(sql);
+            Scanner scanner = new Scanner(System.in);
+            NumberFormat nformat = NumberFormat.getInstance(Locale.US);
+            Servico servico = new Servico();
+
+
+            System.out.println("Informe o nome do servico");
+            System.out.print(">>> ");
+            servico.nome = scanner.nextLine().toUpperCase();
+            nome_servico = servico.nome;
+            System.out.println("Informe valor do servico utilize ponto para separar os centavos: ");
+            System.out.print(">>> ");
+            servico.valor = nformat.parse(scanner.nextLine()).floatValue();
+            System.out.println("Informe a descrição do servico");
+            System.out.print(">>> ");
+            servico.descricao = scanner.nextLine().toUpperCase();
+            descricao_servico = servico.descricao;
+            servico.id_ciente = id;
+
+
+            ps.setString(1, servico.nome);
+            ps.setFloat(2, servico.valor);
+            ps.setString(3, servico.descricao);
+            ps.setInt(4, servico.id_ciente);
+            ps.executeUpdate();//executa um insert na base
+
+
+            //System.out.println("Deseja incluir peças no serviço?");
+
+        } catch (SQLException | ParseException ex) {
+            JOptionPane.showMessageDialog(null, "Erro ao salvar: " + ex);
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            ConnectionFactory.closeConnection(con);
+        }
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Foram utilizadas peças no serviço? \n 1 - SIM \n 2 - NAO");
+        System.out.print(">>> ");
+        int opcao = scanner.nextInt();
+        switch (opcao){
+            case 1:
+                createPecaServico(nome_servico, descricao_servico, id);
+
+                System.out.println("Deseja incluir outras peças para o mesmo serviço?\nSim - 1\nNao - 2");
+                System.out.print(">>> ");
+                int op_incluir = scanner.nextInt();
+                while(op_incluir == 1){
+                    createPecaServico(nome_servico, descricao_servico, id);
+                    System.out.println("Deseja incluir outras peças para o mesmo serviço?\nSim - 1\nNao - 2");
+                    System.out.print(">>> ");
+                    op_incluir = scanner.nextInt();
+
+                }
+                break;
+            default:
+                System.out.println("Opçao inválida");
+        }
+
+        System.out.println("Inserido com sucesso...");
+        System.out.println();
+
+
+    }
+    public static void createPecaServico(String nome_servico, String descricao_servico, int id) throws SQLException {
+        PecaServico pecaServico = new PecaServico();
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Informe o nome da peca: ");
+        System.out.print(">>> ");
+        String nome_peca = scanner.nextLine();
+        int id_peca = selectIdPeca(nome_peca);
+        int id_servico = selectIdServico(nome_servico, descricao_servico, id);
+        System.out.println("Informe a quantidade de " + nome_peca);
+        System.out.print(">>>");
+        int quantidade = scanner.nextInt();
+
+
+        Connection con = ConnectionFactory.getConnection();
+        PreparedStatement ps;
+        String sql = "";
+
+
+        try {
+
+            sql = "INSERT INTO PECA_SERVICO (PECA_IDPECA, SERVICO_IDSERVICO, QUANTIDADE) VALUES (?,?,?)";
+            ps = con.prepareStatement(sql);
+            pecaServico.id_peca = id_peca;
+            pecaServico.id_servico = id_servico;
+            pecaServico.quantidade = quantidade;
+
+            ps.setInt(1, id_peca);
+            ps.setInt(2, id_servico);
+            ps.setInt(3, quantidade);
+
+            ps.executeUpdate();//executa um insert na base
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Erro ao salvar: " + ex);
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            ConnectionFactory.closeConnection(con);
+        }
+        System.out.println("Inserido com sucesso...");
+        System.out.println();
+
+    }
+
+    /* Funções de select para retorno de ID's */
+
+
+    public static int selectIdCliente(String nome, String documento) throws SQLException {
+        int id = 0;
+        Connection con = ConnectionFactory.getConnection();
+        ResultSet myResultSet;
+        Statement myStatement = con.createStatement();
+
+        try {
+            String sql = "select IDCLIENTE from CLIENTE WHERE NMCLIENTE = '" + nome  +"' and `CPF/CNPJ` = '" + documento + "'";
+            myResultSet = myStatement.executeQuery(sql);
+
+
+            while (myResultSet.next()){
+                id = myResultSet.getInt(1);
+            }
+
+        } catch (SQLException ex){
+            JOptionPane.showMessageDialog(null, "Erro no banco de dados: " + ex);
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
+        }finally {
+            ConnectionFactory.closeConnection(con);
+        }
+        return id;
+    }
+
+    public static int selectIdPeca(String nome) throws SQLException {
+        int id = 0;
+        Scanner scanner = new Scanner(System.in);
+        Connection con = ConnectionFactory.getConnection();
+        ResultSet myResultSet;
+        Statement myStatement = con.createStatement();
+
+        try {
+            String sql = "select * from PECA WHERE NMPECA LIKE '%" + nome  +"%'";
+            myResultSet = myStatement.executeQuery(sql);
+
+
+            while (myResultSet.next()){
+                System.out.println("+----------------------------------------------------------------------------------+");
+                System.out.print("| ID: " + myResultSet.getInt("IDPECA"));
+                System.out.print(" | Nome: " + myResultSet.getString("NMPECA"));
+                System.out.print(" | Valor: " + myResultSet.getFloat("VALOR"));
+                System.out.println(" | Descrição: " + myResultSet.getString("DESCRICAO"));
+
+            }
+            System.out.println("+----------------------------------------------------------------------------------+");
+            System.out.println("informe o ID da peça: ");
+            System.out.print(">>> ");
+            id = scanner.nextInt();
+
+        } catch (SQLException ex){
+            JOptionPane.showMessageDialog(null, "Erro no banco de dados: " + ex);
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
+        }finally {
+            ConnectionFactory.closeConnection(con);
+        }
+        return id;
+    }
+
+    public static int selectIdServico(String nome, String descricao, int id_cliente) throws SQLException {
+        int id = 0;
+        Connection con = ConnectionFactory.getConnection();
+        ResultSet myResultSet;
+        Statement myStatement = con.createStatement();
+
+        try {
+            String sql = "select IDSERVICO\n" +
+                    "from SERVICO\n" +
+                    "WHERE NMSERVICO = '" + nome + "' " +
+                    "AND DESCRICAO = '" + descricao +"' " +
+                    "and IDCLIENTE = " + id_cliente;
+            myResultSet = myStatement.executeQuery(sql);
+
+
+            while (myResultSet.next()){
+                id = myResultSet.getInt("IDSERVICO");
+            }
+
+
+        } catch (SQLException ex){
+            JOptionPane.showMessageDialog(null, "Erro no banco de dados: " + ex);
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
+        }finally {
+            ConnectionFactory.closeConnection(con);
+        }
+        return id;
+
+    }
+
+
+
 
 
 }
@@ -423,4 +674,14 @@ class Moto{
     String marca, modelo, cor, combustivel;
     int id_cliente;
 
+}
+
+class Servico{
+    String nome, descricao;
+    float valor;
+    int id_ciente;
+}
+
+class PecaServico{
+    int id_peca, id_servico, quantidade;
 }
