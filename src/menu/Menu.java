@@ -91,8 +91,8 @@ public class Menu {
                 menuOpcao();
                 break;
             case 3:
-                System.out.println("SubmenuVendas");
-                //menuOpcao();
+                menuVendas();
+                menuOpcao();
                 break;
             case 4:
                 System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::\n" +
@@ -692,10 +692,51 @@ public class Menu {
 
 
 
+    public static void menuVendas() throws SQLException, ParseException {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::\t\t\t  1 - CADASTRAR VENDA\t\t\t\t::\n" +
+                "::\t\t\t  2 - CONSULTAR VENDA\t\t\t\t::\n" +
+                "::\t\t\t  3 - ATUALIZAR VENDA               ::\n" +
+                "::            4 - EXCLUIR VENDA \t    \t\t::\n" +
+                "::\t\t\t  5 - SAIR   \t\t\t\t\t\t::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::::::::::::::::::::::::::::::::::::::::::::::::::");
+        System.out.print(" Opção >>> ");
+        int opcao = sc.nextInt();
+
+        switch (opcao) {
+            case 1:
+                //System.out.println("Cadastro");
+                criarVenda();
+                break;
+            case 2:
+                //System.out.println("Consulta");
+                consultaPeca();
+                break;
+            case 3:
+                //System.out.println("Atualiza");
+                menuAtualizaPeca();
+                break;
+            case 4:
+                //System.out.println("Exclui");
+                menuExcluiPeca();
+                break;
+            case 5:
+                menuOpcao();
+                break;
+            default:
+                System.out.println("Opção inválida!!!");
+        }
+
+    }
+
     public static void criarVenda() throws SQLException {
         /*
-         * Cria objeto cliente e insere na base
-         * busca ID do cliente para inserir como fk em Endereço, Email e Telefone.
+         * Cria objeto venda e insere na base
+         *
          */
         Scanner scanner = new Scanner(System.in);
         Connection con = ConnectionFactory.getConnection();
@@ -716,11 +757,13 @@ public class Menu {
         switch (op){
             case 1:
                 System.out.println("Informe o ID do cliente: ");
+                System.out.print(">>> ");
                 id_cliente = scanner.nextInt();
                 break;
             case 2:
                 consultaCliente();
                 System.out.println("Informe o ID do cliente:");
+                System.out.print(">>> ");
                 id_cliente = scanner.nextInt();
                 break;
             default:
@@ -740,11 +783,13 @@ public class Menu {
         switch (op) {
             case 1:
                 System.out.println("Informe o ID da peça: ");
+                System.out.print(">>> ");
                 id_peca = scanner.nextInt();
                 break;
             case 2:
                 consultaPeca();
                 System.out.println("Informe o ID da peça:");
+                System.out.print(">>> ");
                 id_peca = scanner.nextInt();
                 break;
             default:
@@ -754,14 +799,14 @@ public class Menu {
         System.out.println("Informe a quantidade: ");
         System.out.print(">>>");
         quantidade = scanner.nextInt();
-        
+
         float valor_peca = 0;
-        
+
         try {
             sql = "select * from Peca where idPeca = " + id_peca;
             myResultSet = myStatement.executeQuery(sql);
             while (myResultSet.next()){
-               valor_peca =  myResultSet.getFloat("valor");
+                valor_peca =  myResultSet.getFloat("valor");
             }
 
         } catch (SQLException ex){
@@ -770,29 +815,31 @@ public class Menu {
         }finally {
             ConnectionFactory.closeConnection(con);
         }
-        
-        float valor_total = quantidade * valor_peca;
 
+        con = ConnectionFactory.getConnection();
+        // System.out.println("valor peça" + valor_peca);
+        float valor_total = quantidade * valor_peca;
+        // System.out.println("valor total " +  valor_total);
 
         try {
             Venda v = new Venda();
 
-            sql = "\n" +
-                    "INSERT INTO Venda (quantidade, dataVenda, valorTotal, idUsuario, idPeca, idCliente) " +
-                    "VALUES (?,?,?,?,?,?)";
+
+            sql = "INSERT INTO Venda (quantidade, valorTotal, idUsuario, idPeca, idCliente) " +
+                    "VALUES (?,?,?,?,?)";
             ps = con.prepareStatement(sql);
             v.quantidade = quantidade;
-            v.data = "now()";
             v.valor_total = valor_total;
             v.idUsuario = 1;
             v.idPeca = id_peca;
             v.idCliente = id_cliente;
+            //v.data = "now()";
             ps.setInt(1, v.quantidade);
-            ps.setString(2, v.data);
-            ps.setFloat(3, v.valor_total);
-            ps.setInt(4, v.idUsuario);
-            ps.setInt(5, v.idPeca);
-            ps.setInt(6, v.idCliente);
+            //ps.setString(2, v.data);
+            ps.setFloat(2, v.valor_total);
+            ps.setInt(3, v.idUsuario);
+            ps.setInt(4, v.idPeca);
+            ps.setInt(5, v.idCliente);
             ps.executeUpdate();//executa um insert na base
 
         } catch (SQLException ex) {
@@ -802,6 +849,97 @@ public class Menu {
             ConnectionFactory.closeConnection(con);
         }
         System.out.println("::\t\t\t INSERIDO COM SUCESSSO              ::");
+
+        System.out.println("Deseja emitir nota fiscal da venda?\n1 - SIM\n2 - NÃO");
+        System.out.print(">>> ");
+        op = scanner.nextInt();
+
+        switch (op){
+            case 1:
+                int id_nota = idNotaMax();
+
+                emiteNota(id_nota);
+
+                break;
+            case 2:
+                break;
+            default:
+                System.out.println("Opção inválida.");
+        }
+
+    }
+
+    public static int idNotaMax() throws SQLException {
+        Connection con = ConnectionFactory.getConnection();
+        ResultSet myResultSet;
+        Statement myStatement = con.createStatement();
+        int id_nota = 0;
+
+
+        try {
+            String sql = "SELECT MAX(idVenda) as idVenda FROM Venda";
+            myResultSet = myStatement.executeQuery(sql);
+
+
+            while (myResultSet.next()) {
+                id_nota = myResultSet.getInt("idVenda");
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Erro ao salvar: " + ex);
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            ConnectionFactory.closeConnection(con);
+        }
+        return id_nota;
+    }
+
+    public static void emiteNota(int id_nota) throws SQLException {
+
+        Connection con = ConnectionFactory.getConnection();
+        ResultSet myResultSet;
+        Statement myStatement = con.createStatement();
+
+        try {
+            String sql = "select idVenda, idUsuario, nome, tipo, " +
+                    "documento, nomePeca, p.descricao, p.valor, quantidade, v.valorTotal, v.dataVenda  \n" +
+                    "from Venda v \n" +
+                    "inner join Cliente c \n" +
+                    "on v.idCliente = c.idCliente \n" +
+                    "inner join Peca p \n" +
+                    "on v.idPeca = p.idPeca \n" +
+                    "where idVenda = " + id_nota;
+            myResultSet = myStatement.executeQuery(sql);
+
+
+            while (myResultSet.next()) {
+                  System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n" +
+                        "::\t\t\t\t\t\t               \t\t\t\t\t\t\t\t\t\t\t  ::\n" +
+                        "::  \t\t\t\t\t\t         ARTE MOTOS                                   ::\t\n" +
+                        "::\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  ::\t\n" +
+                        "::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\t\t\n" +
+                        "::\tEndereço: R. Ubaldino do Amaral, 63 - Alto da Glória, Curitiba - PR, 80060-195::\n" +
+                        "::  \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  ::\t\t\n" +
+                        "::  Telefone: (41) 1909-1909\t\t\t\t\t\t\t\t\t\t\t\t\t  ::\t\n" +
+                        "::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\n" +
+                        "::\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  ::\t\n" +
+                        ":: Numero NF: "+myResultSet.getInt("IdVenda")+" | Nome: "+myResultSet.getString("nome")+" | Documento: "+myResultSet.getString("documento")+"\t\t\t\t    \t\n" +
+                        ":: Nome peça: "+myResultSet.getString("nomePeca")+"                                         \t\t\t\t\t\t  \t\n" +
+                        ":: Descrição peça: "+myResultSet.getString("p.descricao")+"\t\t\t\t\t\t\t\t\t\t\t\t\t  \t\n" +
+                        ":: Quantidade : "+myResultSet.getInt("quantidade")+"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \t\n" +
+                        ":: Valor : "+myResultSet.getFloat("p.valor")+"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \t\n" +
+                        ":: data:  "+myResultSet.getDate("v.dataVenda")+"\t\t\t\t\t\t\t\t\t\tValor total: R$"+myResultSet.getFloat("v.valorTotal")+"   \n" +
+                        "::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+
+
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Erro no banco de dados: " + ex);
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            ConnectionFactory.closeConnection(con);
+        }
+
     }
 
 
@@ -820,6 +958,5 @@ class Peca{
 
 class Venda{
     int quantidade, idUsuario, idPeca, idCliente;
-    String data;
     float valor_total;
 }
