@@ -14,8 +14,7 @@ import java.util.logging.Logger;
 public class Menu {
     public static void main(String[] args) throws SQLException, ParseException {
         logo();
-        //login();
-        menuOpcao();
+        login();
     }
 
     public static void logo(){
@@ -26,7 +25,7 @@ public class Menu {
                 "::::::::::::::::::::::::::::::::::::::::::::::::::");
     }
 
-    public static void login() throws SQLException {
+    public static void login() throws SQLException, ParseException {
         Scanner sc = new Scanner(System.in);
         String senha_banco = null;
         Connection con = ConnectionFactory.getConnection();
@@ -62,6 +61,7 @@ public class Menu {
         }
         if (senha.equals(senha_banco)) {
             System.out.println("Login realizado com sucesso");
+            menuOpcao();
         }
         else{
             System.out.println("Credenciais inválidas");
@@ -714,15 +714,15 @@ public class Menu {
                 break;
             case 2:
                 //System.out.println("Consulta");
-                consultaPeca();
+                consultaVenda();
                 break;
             case 3:
                 //System.out.println("Atualiza");
-                menuAtualizaPeca();
+                menuAtualizaVenda();
                 break;
             case 4:
                 //System.out.println("Exclui");
-                menuExcluiPeca();
+                menuExcluiVenda();
                 break;
             case 5:
                 menuOpcao();
@@ -942,8 +942,222 @@ public class Menu {
 
     }
 
+    public static void consultaVenda() throws SQLException {
+        Connection con = ConnectionFactory.getConnection();
+        ResultSet myResultSet;
+        Statement myStatement = con.createStatement();
+
+        try {
+            String sql = "select idVenda, idUsuario, nome, tipo, documento, nomePeca, p.descricao, " +
+                    "p.valor, quantidade, v.valorTotal, dataVenda  \n" +
+                    "from Venda v\n" +
+                    "inner join Cliente c\n" +
+                    "on v.idCliente = c.idCliente\n" +
+                    "inner join Peca p\n" +
+                    "on v.idPeca = p.idPeca";
+            myResultSet = myStatement.executeQuery(sql);
+
+            System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+            while (myResultSet.next()) {
+                System.out.println("ID          : " + myResultSet.getInt("idVenda"));
+                System.out.println("Nome        : " + myResultSet.getString("nome"));
+                System.out.println("Nome Peça   : " + myResultSet.getString("nomePeca"));
+                System.out.println("Quantidade  : " + myResultSet.getInt("quantidade"));
+                System.out.println("Valor       : " + myResultSet.getInt("p.valor"));
+                System.out.println("Valor Total : " + myResultSet.getInt("v.valorTotal"));
+                System.out.println("Data venda  : " + myResultSet.getDate("dataVenda"));
+
+                System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::");
+
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Erro ao salvar: " + ex);
+            Logger.getLogger(Menu.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            ConnectionFactory.closeConnection(con);
+        }
+    }
 
 
+    public static void menuExcluiVenda() throws SQLException {
+        Scanner sc = new Scanner(System.in);
+        String tabela = "Venda";
+        String nome_coluna = "idVenda";
+        System.out.println("\n" +
+                "::::::::::::::::::::::::::::::::::::::::::::::::::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::\t\t\t1 - INFORMAR ID VENDA \t\t\t\t::\n" +
+                "::\t\t\t2 - CONSULTAR ID VENDA    \t\t::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::::::::::::::::::::::::::::::::::::::::::::::::::");
+        System.out.print("Opção >>> ");
+        int op = sc.nextInt();
+
+        switch (op){
+            case 1:
+                System.out.println("Informe o id");
+                System.out.print(">>> ");
+                int id = sc.nextInt();
+                excluiRegistro(tabela, nome_coluna ,id);
+                break;
+            case 2:
+                consultaVenda();
+                System.out.println("Informe o id da Venda: ");
+                System.out.print(">>> ");
+                id = sc.nextInt();
+                excluiRegistro(tabela, nome_coluna, id);
+                break;
+            default:
+                System.out.println("Opção inválida");
+                break;
+        }
+    }
+
+
+    public static void menuAtualizaVenda() throws SQLException, ParseException {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::\t\t\t1 - INFORMAR ID VENDA\t\t\t\t::\n" +
+                "::\t\t\t2 - CONSULTAR ID VENDA      \t\t::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::::::::::::::::::::::::::::::::::::::::::::::::::");
+        System.out.print("Opção >>> ");
+        int op = sc.nextInt();
+
+        switch (op){
+            case 1:
+                System.out.println("Informe o id");
+                System.out.print(">>> ");
+                int id = sc.nextInt();
+                atualizaVenda(id);
+                break;
+            case 2:
+                Menu.consultaVenda();
+                System.out.println("Informe o id da venda: ");
+                id = sc.nextInt();
+                atualizaVenda(id);
+                break;
+            default:
+                System.out.println("Opção inválida");
+                break;
+        }
+
+
+    }
+
+
+    public static void atualizaVenda(int id) throws ParseException, SQLException {
+
+        Scanner scanner = new Scanner(System.in);
+        Connection con = ConnectionFactory.getConnection();
+        ResultSet myResultSet;
+        Statement myStatement = con.createStatement();
+        PreparedStatement ps;
+        String sql = "";
+
+        System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::\t\t\t1 - INFORMAR ID CLIENTE\t\t\t\t::\n" +
+                "::\t\t\t2 - CONSULTAR ID CLIENTES    \t\t::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::::::::::::::::::::::::::::::::::::::::::::::::::");
+        System.out.print(">>> ");
+        int op = scanner.nextInt(), id_cliente = 0, id_peca = 0, quantidade;
+
+        switch (op){
+            case 1:
+                System.out.println("Informe o ID do cliente: ");
+                System.out.print(">>> ");
+                id_cliente = scanner.nextInt();
+                break;
+            case 2:
+                Menu.consultaCliente();
+                System.out.println("Informe o ID do cliente:");
+                System.out.print(">>> ");
+                id_cliente = scanner.nextInt();
+                break;
+            default:
+                System.out.println("Opção inválida.");
+        }
+
+
+
+        System.out.println("::::::::::::::::::::::::::::::::::::::::::::::::::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::\t\t\t1 - INFORMAR ID PEÇA\t\t\t\t::\n" +
+                "::\t\t\t2 - CONSULTAR ID PEÇAS      \t\t::\n" +
+                "::\t\t\t\t\t\t\t\t\t\t\t\t::\n" +
+                "::::::::::::::::::::::::::::::::::::::::::::::::::");
+        System.out.print(">>> ");
+        op = scanner.nextInt();
+        switch (op) {
+            case 1:
+                System.out.println("Informe o ID da peça: ");
+                System.out.print(">>> ");
+                id_peca = scanner.nextInt();
+                break;
+            case 2:
+                Menu.consultaPeca();
+                System.out.println("Informe o ID da peça:");
+                System.out.print(">>> ");
+                id_peca = scanner.nextInt();
+                break;
+            default:
+                System.out.println("Opção inválida.");
+        }
+
+        System.out.println("Informe a quantidade: ");
+        System.out.print(">>>");
+        quantidade = scanner.nextInt();
+
+        float valor_peca = 0;
+
+
+
+        con = ConnectionFactory.getConnection();
+        // System.out.println("valor peça" + valor_peca);
+        float valor_total = quantidade * valor_peca;
+        // System.out.println("valor total " +  valor_total);
+        int id_usuario = 1;
+        try {
+
+            sql = "UPDATE Venda SET quantidade=?, valorTotal=?, idPeca=? , idCliente=? WHERE idVenda=" + id;
+            ps = con.prepareStatement(sql);
+
+            ps.setInt(1, quantidade);
+            //ps.setString(2, v.data);
+            ps.setFloat(2, valor_total);
+            ps.setInt(3, id_peca);
+            ps.setInt(4, id_cliente);
+            ps.executeUpdate();//executa um insert na base
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Erro ao salvar: " + ex);
+            Logger.getLogger(class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            ConnectionFactory.closeConnection(con);
+        }
+        System.out.println("::\t\t\t ALTERADO COM SUCESSSO              ::");
+
+        System.out.println("Deseja emitir nota fiscal da venda?\n1 - SIM\n2 - NÃO");
+        System.out.print(">>> ");
+        op = scanner.nextInt();
+
+        switch (op){
+            case 1:
+                int id_nota = idNotaMax();
+
+                emiteNota(id_nota);
+
+                break;
+            case 2:
+                break;
+            default:
+                System.out.println("Opção inválida.");
+        }
+    }
 
 
 }
