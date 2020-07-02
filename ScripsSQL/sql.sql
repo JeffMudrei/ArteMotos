@@ -47,12 +47,12 @@ CREATE TABLE  Cliente (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS Venda (
   idVenda INT primary key not NULL AUTO_INCREMENT,
-  nomeCliente VARCHAR(100) NOT NULL,
-  documento VARCHAR(45) NULL,
-  nomePeca VARCHAR(45) NULL,
-  valorPeca FLOAT NULL,
+--  nomeCliente VARCHAR(100) NOT NULL,
+ -- documento VARCHAR(45) NULL,
+ -- nomePeca VARCHAR(45) NULL,
+ -- valorPeca FLOAT NULL,
   quantidade INT NULL,
-  dataVenda DATE NULL,
+  dataVenda timestamp NULL default current_timestamp,
   valorTotal FLOAT NULL,
   idUsuario INT,
   idPeca INT,
